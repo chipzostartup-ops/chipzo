@@ -9,10 +9,18 @@ Batches:            90 per message, 8s pause
 Privacy:            BCC, so no subscriber sees another
 ```
 
-## 1. Collect (Google Form)
+## 1. Collect (Google Form) — live
 
-`forms.new` → one question, **Short answer**, label it `Email` →
-Responses → **Link to Sheets**.
+| What | Where |
+|---|---|
+| Form | https://docs.google.com/forms/d/e/1FAIpQLSd5qnYhSGrANAJtuIBHD6twNbD_Mzfulnrku8IFGnAHCvTrZQ/viewform |
+| Responses Sheet | https://docs.google.com/spreadsheets/d/1no0yGZ-THDxx8xd_gxf-MQl0eehB86Kwh0XzRJKeHi8/edit |
+| Embedded on | https://chipzovlsi.blogspot.com/p/interview-bank.html |
+
+One question, short answer, `Email`, required. The form is embedded in the
+Interview Bank page as an iframe (`?embedded=true`, 620px tall so the Submit
+button never clips on mobile). To change the form, edit it in Google Forms —
+the published URL stays the same, so the embed keeps working.
 
 Each signup lands in the Sheet. Addresses stay private: the Sheet is never
 published to the web and never committed here.
