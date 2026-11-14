@@ -21,7 +21,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from channels import blogger, email_brevo, meta, telegram  # noqa: E402
+import links  # noqa: E402
 from common import (  # noqa: E402
+    DRAFTS,
     ROOT,
     STATE,
     load_config,
@@ -99,6 +101,29 @@ def dispatch(item: dict, cfg: dict) -> None:
         raise RuntimeError(f"no automated sender for {item['platform']}")
 
 
+def refresh_after_publish(slug: str, cfg: dict) -> None:
+    """Blogger just created a post. Learn its real URL and regenerate the rest."""
+    try:
+        links.invalidate()
+        links.sync(verbose=False)
+    except Exception as exc:  # noqa: BLE001
+        print(f"          (link sync skipped: {exc})")
+        return
+
+    manifest = read_json(ROOT / "content" / "out" / slug / "manifest.json", {}) or {}
+    source = manifest.get("source")
+    if not source:
+        return
+    try:
+        import repurpose
+
+        links.invalidate()
+        repurpose.process(DRAFTS / source, cfg, force=True)
+        print("          (platform files regenerated with the real URL)")
+    except Exception as exc:  # noqa: BLE001
+        print(f"          (regenerate skipped: {exc})")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Publish everything that is due")
     ap.add_argument("--dry-run", action="store_true")
@@ -165,6 +190,8 @@ def main() -> int:
             item["last_error"] = ""
             print(f"  OK      {label}")
             sent += 1
+            if item["platform"] == "blog":
+                refresh_after_publish(item["slug"], cfg)
         except Exception as exc:  # noqa: BLE001 - keep the run alive
             item["status"] = "failed"
             item["attempts"] = item.get("attempts", 0) + 1

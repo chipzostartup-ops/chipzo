@@ -50,6 +50,7 @@ from common import (  # noqa: E402
     write_json,
     write_text,
 )
+from links import cached as cached_url  # noqa: E402
 
 PLATFORM_FILES = [
     "blog.html",
@@ -259,6 +260,11 @@ def md_to_html(md: str) -> str:
 # -------------------------------------------------------------- builders ----
 
 
+def blog_url(brand: dict, meta: dict) -> str:
+    """The real published URL if Blogger told us, otherwise the best guess."""
+    return cached_url(meta["slug"]) or f"{brand['site'].rstrip('/')}/{meta['slug']}.html"
+
+
 def default_hook(meta: dict, sec: dict) -> str:
     if meta.get("hook"):
         return str(meta["hook"])
@@ -315,7 +321,7 @@ def build_blog(meta: dict, sec: dict, cfg: dict) -> str:
     desc = first_sentence(
         strip_md(meta.get("description") or sec["first_para"] or meta["title"]), 155
     )
-    canonical = f"{brand['site'].rstrip('/')}/{meta['slug']}.html"
+    canonical = blog_url(brand, meta)
     cta = meta.get("cta") or "Save this for your next interview."
 
     # jump break after the first paragraph for Blogger
@@ -406,7 +412,7 @@ def build_linkedin(meta: dict, sec: dict, cfg: dict) -> str:
         points = [first_sentence(p, 120) for p in sec["paras"][1:5]]
     bullets = "\n".join(f"→ {p}" for p in points)
     cta = meta.get("cta") or "Save this. Repost if someone you know is interviewing."
-    link = f"{brand['site'].rstrip('/')}/{meta['slug']}.html"
+    link = blog_url(brand, meta)
 
     return f"""{hook}
 
@@ -499,7 +505,7 @@ def build_telegram(meta: dict, sec: dict, cfg: dict) -> str:
     brand = cfg["brand"]
     points = key_points(sec, 4)
     body = "\n".join(f"• {p}" for p in points)
-    link = f"{brand['site'].rstrip('/')}/{meta['slug']}.html"
+    link = blog_url(brand, meta)
 
     return f"""**{meta['title']}**
 
@@ -518,7 +524,7 @@ def build_whatsapp(meta: dict, sec: dict, cfg: dict) -> str:
     lead = first_sentence(sec["first_para"] or meta["title"], 130)
     point = key_points(sec, 1)
     point = point[0] if point else ""
-    link = f"{brand['site'].rstrip('/')}/{meta['slug']}.html"
+    link = blog_url(brand, meta)
 
     lines = [f"*{meta['title']}*", "", lead]
     if point:
@@ -532,7 +538,7 @@ def build_facebook(meta: dict, sec: dict, cfg: dict) -> str:
     hook = default_hook(meta, sec)
     points = key_points(sec, 5)
     bullets = "\n".join(f"• {p}" for p in points)
-    link = f"{brand['site'].rstrip('/')}/{meta['slug']}.html"
+    link = blog_url(brand, meta)
 
     return f"""{hook}
 
@@ -547,7 +553,7 @@ Full explanation: {link}
 def build_x_thread(meta: dict, sec: dict, cfg: dict) -> str:
     hook = default_hook(meta, sec)
     points = key_points(sec, 5)
-    link = f"{cfg['brand']['site'].rstrip('/')}/{meta['slug']}.html"
+    link = blog_url(cfg["brand"], meta)
 
     tweets = [f"{hook}\n\nA thread 🧵"]
     for p in points[:5]:
@@ -564,7 +570,7 @@ def build_email(meta: dict, sec: dict, cfg: dict) -> str:
     brand = cfg["brand"]
     points = key_points(sec, 3)
     bullets = "\n".join(f"- {p}" for p in points)
-    link = f"{brand['site'].rstrip('/')}/{meta['slug']}.html"
+    link = blog_url(brand, meta)
 
     return f"""Subject: {meta['title']}
 Preview: {first_sentence(sec['first_para'] or meta['title'], 90)}
