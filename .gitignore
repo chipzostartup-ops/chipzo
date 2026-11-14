@@ -1,0 +1,17 @@
+# secrets
+automation/config.json
+automation/state/whatsapp_contacts.csv
+
+# generated
+content/out/
+dashboard/index.html
+automation/state/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# os
+Thumbs.db
+.DS_Store
+desktop.ini

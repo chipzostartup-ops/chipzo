@@ -1,0 +1,55 @@
+{
+  "brand": {
+    "name": "Chipzo",
+    "tagline": "VLSI, explained without the gatekeeping.",
+    "site": "https://chipzovlsi.blogspot.com",
+    "handle": "@chipzostartup",
+    "lead_magnet_url": "https://chipzovlsi.blogspot.com/p/interview-bank.html",
+    "product_url": "",
+    "author": "Chipzo",
+    "hashtags_linkedin": "#VLSI #Semiconductor #VLSIFreshers",
+    "hashtags_instagram": "#vlsi #semiconductor #verilog #systemverilog #asicdesign #rtldesign #physicaldesign #sta #chipdesign #ece"
+  },
+  "telegram": {
+    "enabled": true,
+    "bot_token": "",
+    "chat_id": "@chipzo"
+  },
+  "blogger": {
+    "enabled": true,
+    "email_address": "",
+    "smtp_host": "smtp-relay.brevo.com",
+    "smtp_port": 587,
+    "smtp_user": "",
+    "smtp_password": "",
+    "from_address": ""
+  },
+  "facebook": {
+    "enabled": false,
+    "page_id": "",
+    "page_token": ""
+  },
+  "instagram": {
+    "enabled": false,
+    "ig_user_id": "",
+    "page_token": ""
+  },
+  "whatsapp": {
+    "enabled": false,
+    "phone_number_id": "",
+    "token": "",
+    "template_name": ""
+  },
+  "email": {
+    "enabled": false,
+    "provider": "brevo",
+    "api_key": "",
+    "list_id": 2,
+    "from_address": ""
+  },
+  "publish": {
+    "dry_run": true,
+    "timezone": "Asia/Kolkata",
+    "days_tolerance": 0
+  }
+}

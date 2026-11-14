@@ -1,0 +1,77 @@
+name: chipzo-daily
+
+on:
+  schedule:
+    # GitHub cron is UTC. These land near 07:30, 13:30 and 19:30 IST.
+    - cron: "0 2,8,14 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (no publishing)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: chipzo-daily
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Regenerate platform files
+        run: python automation/repurpose.py --all
+
+      - name: Sync the queue
+        run: python automation/queue.py build
+
+      - name: Publish what is due
+        env:
+          CHIPZO_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BLOGGER_EMAIL: ${{ secrets.BLOGGER_EMAIL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+        run: python automation/run_daily.py --tolerance-min 30
+
+      # The queue remembers what was already sent. Without this the next run
+      # would rebuild from scratch and republish everything.
+      - name: Persist publish state
+        if: always()
+        run: |
+          git config user.name  "chipzo-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -f automation/state/queue.json
+          if git diff --cached --quiet; then
+            echo "no state change"
+          else
+            git commit -m "chore: publish state [skip ci]"
+            git push
+          fi
+
+      - name: Dashboard artifact
+        if: always()
+        run: python automation/dashboard.py
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chipzo-state
+          path: |
+            automation/state/queue.json
+            automation/state/manual_tasks.md
+            dashboard/index.html
+          retention-days: 14
+          if-no-files-found: ignore
