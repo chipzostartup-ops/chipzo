@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-14T18:31:51+00:00",
+  "updated_at": "2026-11-14T19:50:05+00:00",
   "items": [
     {
       "id": "setup-time-vs-hold-time:linkedin",
@@ -26,19 +26,6 @@
       "attempts": 0,
       "last_error": "",
       "sent_at": "2026-11-14T18:10:56+00:00"
-    },
-    {
-      "id": "setup-time-vs-hold-time:email",
-      "slug": "setup-time-vs-hold-time",
-      "title": "Setup Time vs Hold Time — The Difference That Decides Your Interview",
-      "platform": "email",
-      "file": "content/out/setup-time-vs-hold-time/email.md",
-      "scheduled_at": "2026-11-14T10:00:00+05:30",
-      "status": "pending",
-      "manual": false,
-      "attempts": 0,
-      "last_error": "",
-      "sent_at": ""
     },
     {
       "id": "setup-time-vs-hold-time:facebook",
@@ -179,6 +166,19 @@
       "scheduled_at": "2026-11-15T19:00:00+05:30",
       "status": "pending",
       "manual": true,
+      "attempts": 0,
+      "last_error": "",
+      "sent_at": ""
+    },
+    {
+      "id": "digest:2026-11-16",
+      "slug": "_digest",
+      "title": "Weekly digest - 2 article(s)",
+      "platform": "email",
+      "file": "content/out/_digest/2026-11-16.md",
+      "scheduled_at": "2026-11-16T10:00:00+05:30",
+      "status": "pending",
+      "manual": false,
       "attempts": 0,
       "last_error": "",
       "sent_at": ""
@@ -413,6 +413,19 @@
       "scheduled_at": "2026-11-22T19:00:00+05:30",
       "status": "pending",
       "manual": true,
+      "attempts": 0,
+      "last_error": "",
+      "sent_at": ""
+    },
+    {
+      "id": "digest:2026-11-23",
+      "slug": "_digest",
+      "title": "Weekly digest - 3 article(s)",
+      "platform": "email",
+      "file": "content/out/_digest/2026-11-23.md",
+      "scheduled_at": "2026-11-23T10:00:00+05:30",
+      "status": "pending",
+      "manual": false,
       "attempts": 0,
       "last_error": "",
       "sent_at": ""
