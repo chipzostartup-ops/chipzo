@@ -1,0 +1,86 @@
+# Email list — how it works
+
+Sending runs on **Gmail SMTP** with the same app password that already publishes
+to Blogger. Nothing new to set up, no new provider, no IP allowlist.
+
+```
+Gmail free account: 500 recipients/day, ~100 per message
+Batches:            90 per message, 8s pause
+Privacy:            BCC, so no subscriber sees another
+```
+
+## 1. Collect (Google Form)
+
+`forms.new` → one question, **Short answer**, label it `Email` →
+Responses → **Link to Sheets**.
+
+Each signup lands in the Sheet. Addresses stay private: the Sheet is never
+published to the web and never committed here.
+
+## 2. Import
+
+Sheet → **File → Download → CSV**, then:
+
+```powershell
+py -3 automation\subscribers.py import Downloads\chipzo.csv
+py -3 automation\subscribers.py list
+```
+
+The importer accepts any column whose name contains "email" (`Email`,
+`Email Address`, `E-mail`), ignores blanks and junk, lowercases, and skips
+duplicates. Result looks like:
+
+```
+{'added': 2, 'already_there': 1, 'invalid': 1, 'total': 3}
+```
+
+Manage by hand when needed:
+
+```powershell
+py -3 automation\subscribers.py add someone@example.com
+py -3 automation\subscribers.py remove someone@example.com
+py -3 automation\subscribers.py count
+```
+
+## 3. Test without mailing anyone
+
+```powershell
+py -3 automation\channels\gmail_bulk.py --test you@gmail.com
+py -3 automation\channels\gmail_bulk.py content\out\<slug>\email.md --dry-run
+```
+
+## 4. Let GitHub send it
+
+The list must not sit in a public repo, so it travels as a secret.
+
+1. Repo → Settings → Secrets and variables → Actions → **New repository secret**
+2. Name `SUBSCRIBERS_CSV`
+3. Value: the entire contents of `automation\state\subscribers.csv`,
+   header included:
+
+```
+email,added_at,source
+someone@example.com,2026-11-15T04:10:00+00:00,google-form
+```
+
+That secret does two things at once:
+
+- writes the list into `automation/state/subscribers.csv` on the runner
+- **turns the email channel on** (`SUBSCRIBERS_CSV` present ⇒ `email.enabled`)
+
+No secret, no sending — so a run never fails just because nobody has subscribed.
+
+## What a subscriber receives
+
+The `email.md` variant of each article, rendered to HTML, plus a footer with the
+blog, the Telegram link and a `mailto:` unsubscribe.
+
+## Limits worth knowing
+
+- Refresh the `SUBSCRIBERS_CSV` secret when the list grows; the runner has no
+  other way to see new signups.
+- The `mailto:` unsubscribe is manual — you remove them with
+  `subscribers.py remove`. Fine for a small list; swap in a real endpoint before
+  it gets big.
+- Once the list is past a few hundred, move to Brevo campaigns (`email.provider:
+  brevo` + an `xkeysib-` key). That path is already coded.

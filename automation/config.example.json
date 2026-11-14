@@ -42,10 +42,11 @@
   },
   "email": {
     "enabled": false,
-    "provider": "brevo",
+    "provider": "gmail",
     "api_key": "",
     "list_id": 2,
-    "from_address": ""
+    "from_address": "chipzostartup@gmail.com",
+    "batch_size": 90
   },
   "publish": {
     "dry_run": true,

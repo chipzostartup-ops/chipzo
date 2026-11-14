@@ -57,6 +57,20 @@ jobs:
           fi
           echo "All 8 secrets present."
 
+      # The subscriber list is private, so it never lives in this public repo.
+      # It is stored as the SUBSCRIBERS_CSV secret and materialised here.
+      - name: Load subscribers (optional)
+        env:
+          SUBSCRIBERS_CSV: ${{ secrets.SUBSCRIBERS_CSV }}
+        run: |
+          if [ -n "$SUBSCRIBERS_CSV" ]; then
+            mkdir -p automation/state
+            printf '%s\n' "$SUBSCRIBERS_CSV" > automation/state/subscribers.csv
+            echo "subscribers: $(( $(wc -l < automation/state/subscribers.csv) - 1 ))"
+          else
+            echo "no SUBSCRIBERS_CSV secret - email items stay manual"
+          fi
+
       - name: Regenerate platform files
         run: python automation/repurpose.py --all
 

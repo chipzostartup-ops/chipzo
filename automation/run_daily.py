@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from channels import blogger, email_brevo, meta, telegram  # noqa: E402
+from channels import blogger, email_brevo, gmail_bulk, meta, telegram  # noqa: E402
 import links  # noqa: E402
 from common import (  # noqa: E402
     DRAFTS,
@@ -91,7 +91,11 @@ def dispatch(item: dict, cfg: dict) -> None:
     elif item["platform"] == "facebook":
         meta.fb_post(text, cfg=cfg)
     elif item["platform"] == "email":
-        email_brevo.send(path, cfg)
+        provider = (cfg.get("email", {}).get("provider") or "brevo").lower()
+        if provider == "gmail":
+            gmail_bulk.send(path, cfg)
+        else:
+            email_brevo.send(path, cfg)
     elif item["platform"].startswith("instagram"):
         raise RuntimeError(
             "Instagram needs a public image URL. Publish manually from instagram_carousel.txt "

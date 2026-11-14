@@ -65,6 +65,11 @@ def load_config() -> dict:
     if os.environ.get("CHIPZO_DRY_RUN", "").lower() in {"0", "false", "no"}:
         cfg.setdefault("publish", {})["dry_run"] = False
 
+    # The email channel only becomes live when there is a list to send to.
+    if os.environ.get("SUBSCRIBERS_CSV", "").strip():
+        cfg.setdefault("email", {})["enabled"] = True
+        cfg["email"].setdefault("provider", "gmail")
+
     return cfg
 
 
