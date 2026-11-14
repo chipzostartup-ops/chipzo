@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -91,6 +91,14 @@ def dispatch(item: dict, cfg: dict) -> None:
     elif item["platform"] == "facebook":
         meta.fb_post(text, cfg=cfg)
     elif item["platform"] == "email":
+        if item.get("slug") == "_digest":
+            # Links to posts that went live minutes ago are only known now.
+            from digest import refresh as refresh_digest
+
+            day = date.fromisoformat(item["id"].split(":", 1)[1])
+            rebuilt = refresh_digest(day, cfg)
+            if rebuilt:
+                path = ROOT / rebuilt
         provider = (cfg.get("email", {}).get("provider") or "brevo").lower()
         if provider == "gmail":
             gmail_bulk.send(path, cfg)

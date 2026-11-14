@@ -74,17 +74,40 @@ def _split_subject(text: str) -> tuple[str, str, str]:
     return subject, preview, body
 
 
+def _inline(text: str) -> str:
+    """Escape, then re-apply the two bits of markdown that matter in email."""
+    text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    text = re.sub(
+        r"\[([^\]]+)\]\((https?://[^)\s]+)\)",
+        r'<a href="\2" style="color:#0a8f6b;text-decoration:underline">\1</a>',
+        text,
+    )
+    text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
+    return text
+
+
 def md_to_simple_html(text: str) -> str:
+    """Small, predictable markdown subset: paragraphs, ## headings, - lists, links, bold."""
     out = []
-    for block in re.split(r"\n\s*\n", strip_md(text)):
+    for block in re.split(r"\n\s*\n", text.strip()):
         b = block.strip()
         if not b:
             continue
-        if b.startswith("- "):
-            items = "".join(f"<li>{line[2:].strip()}</li>" for line in b.splitlines() if line.startswith("- "))
-            out.append(f"<ul>{items}</ul>")
+        if b.startswith("## "):
+            out.append(f'<h3 style="margin:24px 0 8px;font-size:17px;color:#111">{_inline(b[3:].strip())}</h3>')
+        elif b.startswith("### "):
+            out.append(f'<h4 style="margin:20px 0 6px;font-size:15px;color:#111">{_inline(b[4:].strip())}</h4>')
+        elif b.startswith("- "):
+            items = "".join(
+                f'<li style="margin-bottom:8px">{_inline(line[2:].strip())}</li>'
+                for line in b.splitlines()
+                if line.startswith("- ")
+            )
+            out.append(f'<ul style="padding-left:20px;margin:0 0 18px">{items}</ul>')
+        elif re.fullmatch(r"-{3,}", b):
+            out.append('<hr style="border:none;border-top:1px solid #e4e7ec;margin:22px 0">')
         else:
-            out.append(f"<p>{b.replace(chr(10), ' ')}</p>")
+            out.append(f'<p style="margin:0 0 14px">{_inline(b.replace(chr(10), " "))}</p>')
     return (
         '<div style="font-family:Inter,Arial,sans-serif;line-height:1.7;color:#111;max-width:600px">'
         + "".join(out)

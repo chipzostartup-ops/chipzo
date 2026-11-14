@@ -31,6 +31,7 @@ from common import (  # noqa: E402
     read_json,
     write_json,
 )
+from digest import write as write_digest  # noqa: E402
 
 QUEUE_PATH = STATE / "queue.json"
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -47,7 +48,7 @@ PLATFORMS = [
     ("x_thread",          "x_thread.txt",            "21:30", True),
 ]
 
-EMAIL_DAY = 5  # Friday (Monday=0)
+EMAIL_DAY = 0  # Monday (Monday=0) — one weekly digest, every Monday 10:00 IST
 
 
 def load_manifests() -> list[dict]:
@@ -94,12 +95,14 @@ def build(start: date, per_week: int, reset: bool) -> None:
             existing_base[slug] = parse_dt(i["scheduled_at"]).date()
 
     items: list[dict] = []
+    slug_day: dict[str, date] = {}
     for idx, m in enumerate(manifests):
         if m["slug"] in existing_base:
             base_day = existing_base[m["slug"]]
         else:
             offset = round(new_index.get(m["slug"], 0) * step_days)
             base_day = anchor + timedelta(days=offset)
+        slug_day[m["slug"]] = base_day
 
         base = datetime.combine(base_day, datetime.min.time(), tzinfo=IST)
         for key, filename, hhmm, manual in PLATFORMS:
@@ -130,26 +133,44 @@ def build(start: date, per_week: int, reset: bool) -> None:
                 }
             )
 
-        # weekly email digest
-        if base.weekday() == EMAIL_DAY or idx == 0:
-            item_id = f"{m['slug']}:email"
-            prev = old.get(item_id, {})
-            items.append(
-                {
-                    "id": item_id,
-                    "slug": m["slug"],
-                    "title": m.get("title", m["slug"]),
-                    "platform": "email",
-                    "file": f"content/out/{m['slug']}/email.md",
-                    "scheduled_at": prev.get("scheduled_at")
-                    or base.replace(hour=10, minute=0).isoformat(),
-                    "status": prev.get("status", "pending"),
-                    "manual": False,
-                    "attempts": prev.get("attempts", 0),
-                    "last_error": prev.get("last_error", ""),
-                    "sent_at": prev.get("sent_at", ""),
-                }
-            )
+        # The weekly digest is built once per week below, not per post, so it
+        # still goes out on a Monday when no article happens to be scheduled.
+
+    # --- weekly digest: one email every Monday, whatever the posting schedule
+    if slug_day:
+        by_slug = {m["slug"]: m for m in manifests}
+        first_day, last_day = min(slug_day.values()), max(slug_day.values())
+        monday = first_day + timedelta(days=(EMAIL_DAY - first_day.weekday()) % 7)
+
+        while monday <= last_day:
+            week = [
+                by_slug[slug]
+                for slug, day in slug_day.items()
+                if monday - timedelta(days=6) <= day <= monday
+            ]
+            week.sort(key=lambda m: m.get("date", ""))
+
+            digest_file = write_digest(monday, week, cfg)
+            if digest_file:
+                item_id = f"digest:{monday.isoformat()}"
+                prev = old.get(item_id, {})
+                when = datetime.combine(monday, datetime.min.time(), tzinfo=IST).replace(hour=10, minute=0)
+                items.append(
+                    {
+                        "id": item_id,
+                        "slug": "_digest",
+                        "title": f"Weekly digest - {len(week)} article(s)",
+                        "platform": "email",
+                        "file": digest_file,
+                        "scheduled_at": prev.get("scheduled_at") or when.isoformat(),
+                        "status": prev.get("status", "pending"),
+                        "manual": False,
+                        "attempts": prev.get("attempts", 0),
+                        "last_error": prev.get("last_error", ""),
+                        "sent_at": prev.get("sent_at", ""),
+                    }
+                )
+            monday += timedelta(days=7)
 
     items.sort(key=lambda i: (i["scheduled_at"], i["slug"], i["platform"]))
     queue = {"updated_at": now_utc().isoformat(timespec="seconds"), "items": items}
