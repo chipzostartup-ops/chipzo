@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-14T19:50:05+00:00",
+  "updated_at": "2026-11-16T15:48:24+00:00",
   "items": [
     {
       "id": "setup-time-vs-hold-time:linkedin",
@@ -125,10 +125,10 @@
       "platform": "blog",
       "file": "content/out/clock-domain-crossing-techniques/blog.html",
       "scheduled_at": "2026-11-15T09:00:00+05:30",
-      "status": "pending",
+      "status": "failed",
       "manual": false,
-      "attempts": 0,
-      "last_error": "",
+      "attempts": 1,
+      "last_error": "missing config: blogger.email_address (the secret @blogger.com address), blogger.smtp_user, blogger.smtp_password",
       "sent_at": ""
     },
     {
@@ -151,10 +151,10 @@
       "platform": "telegram",
       "file": "content/out/clock-domain-crossing-techniques/telegram.md",
       "scheduled_at": "2026-11-15T18:30:00+05:30",
-      "status": "pending",
+      "status": "failed",
       "manual": false,
-      "attempts": 0,
-      "last_error": "",
+      "attempts": 1,
+      "last_error": "telegram.bot_token missing (config.json or TELEGRAM_BOT_TOKEN)",
       "sent_at": ""
     },
     {
