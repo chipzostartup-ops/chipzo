@@ -39,23 +39,36 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Without this a missing secret just prints "MANUAL (not connected)" and
-      # the run still goes green. Fail loudly instead.
-      - name: Verify secrets
+      # Report which secrets are present instead of deciding for the run.
+      # A missing secret must never stop the other channels from working: the
+      # dispatcher already degrades per channel and records why in the queue.
+      - name: Check secrets
         run: |
+          core="TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID SMTP_HOST SMTP_USER SMTP_PASSWORD"
+          extra="BLOGGER_EMAIL SMTP_PORT SMTP_FROM"
           missing=0
-          for name in TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID BLOGGER_EMAIL \
-                      SMTP_HOST SMTP_PORT SMTP_USER SMTP_PASSWORD SMTP_FROM; do
+          for name in $core; do
             if [ -z "${!name}" ]; then
-              echo "::error::secret $name is empty or missing"
+              echo "::error::secret $name is missing - that channel will be skipped"
               missing=$((missing + 1))
+            else
+              echo "ok    $name"
             fi
           done
+          for name in $extra; do
+            if [ -z "${!name}" ]; then
+              echo "warn  $name not set (a default is used)"
+            else
+              echo "ok    $name"
+            fi
+          done
+          echo "---"
           if [ "$missing" -gt 0 ]; then
-            echo "Add the missing values in Settings -> Secrets and variables -> Actions."
-            exit 1
+            echo "$missing core secret(s) missing. Add them in Settings -> Secrets and variables -> Actions."
+          else
+            echo "All core secrets present."
           fi
-          echo "All 8 secrets present."
+          # Deliberately exit 0: a partial setup should still publish what it can.
 
       # The subscriber list is private, so it never lives in this public repo.
       # It is stored as the SUBSCRIBERS_CSV secret and materialised here.
@@ -80,7 +93,9 @@ jobs:
       - name: Publish what is due
         env:
           CHIPZO_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
-        run: python automation/run_daily.py --tolerance-min 30 --reset-failed
+        # 180 minutes, not 30: one missed run (a GitHub outage, a red build)
+        # should not silently kill the whole day's slot forever.
+        run: python automation/run_daily.py --tolerance-min 180 --reset-failed
 
       # The queue remembers what was already sent. Without this the next run
       # would rebuild from scratch and republish everything.
