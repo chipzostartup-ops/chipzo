@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-19T19:56:47+00:00",
+  "updated_at": "2026-11-20T04:54:00+00:00",
   "items": [
     {
       "id": "setup-time-vs-hold-time:linkedin",
@@ -127,7 +127,7 @@
       "scheduled_at": "2026-11-15T09:00:00+05:30",
       "status": "failed",
       "manual": false,
-      "attempts": 11,
+      "attempts": 12,
       "last_error": "missing config: blogger.email_address (the secret @blogger.com address), blogger.smtp_user, blogger.smtp_password",
       "sent_at": ""
     },
@@ -153,7 +153,7 @@
       "scheduled_at": "2026-11-15T18:30:00+05:30",
       "status": "failed",
       "manual": false,
-      "attempts": 11,
+      "attempts": 12,
       "last_error": "telegram.bot_token missing (config.json or TELEGRAM_BOT_TOKEN)",
       "sent_at": ""
     },
