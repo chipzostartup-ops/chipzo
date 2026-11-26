@@ -261,6 +261,11 @@ def send_file(platform: str, path: Path, cfg: dict | None = None, due_at=None, d
     return create_post(platform, path.read_text(encoding="utf-8"), cfg=cfg, due_at=due_at, dry_run=dry_run)
 
 
+def ready_platforms(cfg: dict | None = None) -> set[str]:
+    """Which queue platforms actually have a Buffer channel right now."""
+    return set(channel_map(cfg))
+
+
 def describe(cfg: dict | None = None) -> str:
     """Read-only report used by --check and by connect.py."""
     cfg = cfg or load_config()

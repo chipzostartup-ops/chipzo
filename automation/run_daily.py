@@ -66,11 +66,14 @@ def can_send(item: dict, cfg: dict) -> bool:
     # Buffer covers LinkedIn, X and Facebook. Without it, LinkedIn and X have
     # no free API at all, and Facebook falls back to Meta's own token.
     if platform in buffer.PLATFORMS:
-        if buffer_on:
-            return True
-        if platform == "facebook":
-            return bool(cfg.get("facebook", {}).get("enabled"))
-        return False
+        if not buffer_on:
+            if platform == "facebook":
+                return bool(cfg.get("facebook", {}).get("enabled"))
+            return False
+        ready = cfg.get("_buffer_ready")
+        # A Buffer key does not guarantee every network is connected; an
+        # unconnected one is a chore for a human, not a failed send.
+        return platform in ready if ready is not None else True
 
     section = SECTION.get(platform)
     if not section:
@@ -191,6 +194,20 @@ def main() -> int:
 
     cfg = load_config()
     dry = args.dry_run or cfg.get("publish", {}).get("dry_run", True)
+
+    # One channel lookup per run, not one per item. A Buffer platform with no
+    # channel is a chore for a human; a bad key is a configuration fault.
+    config_error = ""
+    if cfg.get("buffer", {}).get("enabled"):
+        try:
+            cfg["_buffer_ready"] = buffer.ready_platforms(cfg)
+        except RuntimeError as exc:
+            config_error = f"buffer: {exc}"
+            cfg["_buffer_ready"] = set()
+        missing = [p for p in buffer.PLATFORMS if p not in cfg["_buffer_ready"]]
+        if missing and not config_error:
+            print(f"Buffer: no channel for {', '.join(missing)} yet - those stay manual")
+
     queue = read_queue()
     items = queue["items"]
     now = now_utc()
@@ -226,7 +243,6 @@ def main() -> int:
     print(f"Now: {now.isoformat(timespec='seconds')}")
     print(f"Dry run: {dry}")
     print(f"Due: {len(due)} item(s)\n")
-
     sent = skipped = failed = 0
     blocked: dict[str, int] = {}
     for item in due:
@@ -286,8 +302,12 @@ def main() -> int:
     if deaf:
         print("   fix the missing secret, then: python automation/queue.py reschedule")
 
+    if config_error:
+        print(f"::error::{config_error}")
+        print("   fix the credential, then: python automation/queue.py reschedule")
+
     print(f"\nSummary: {sent} {'would send' if dry else 'sent'}, {skipped} manual, {failed} failed")
-    return 1 if failed or deaf else 0
+    return 1 if failed or deaf or config_error else 0
 
 
 if __name__ == "__main__":
