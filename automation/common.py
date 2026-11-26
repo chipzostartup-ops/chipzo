@@ -50,9 +50,15 @@ ENV_MAP = {
 
 
 def load_config() -> dict:
-    path = AUTOMATION / "config.json"
-    if not path.exists():
-        path = AUTOMATION / "config.example.json"
+    # CHIPZO_CONFIG lets a test point at a different file without touching the
+    # real one. Handy for reproducing a CI failure locally.
+    override = os.environ.get("CHIPZO_CONFIG")
+    if override:
+        path = Path(override)
+    else:
+        path = AUTOMATION / "config.json"
+        if not path.exists():
+            path = AUTOMATION / "config.example.json"
     with open(path, "r", encoding="utf-8") as fh:
         cfg = json.load(fh)
 

@@ -216,8 +216,10 @@ def reschedule(start: date, per_week: int) -> None:
         if slug and slug != "_digest" and slug not in base_day:
             base_day[slug] = parse_dt(i["scheduled_at"]).date()
 
+    # `failed` means it never went out, so it belongs in the backlog too.
+    retryable = {"pending", "failed"}
     pending_slugs = {
-        i["slug"] for i in items if i["status"] == "pending" and i.get("slug") not in (None, "_digest")
+        i["slug"] for i in items if i["status"] in retryable and i.get("slug") not in (None, "_digest")
     }
     todo = sorted((s for s in base_day if s in pending_slugs), key=lambda s: base_day[s])
     if not todo:
@@ -231,9 +233,11 @@ def reschedule(start: date, per_week: int) -> None:
         for i in items:
             if i.get("slug") != slug:
                 continue
-            if i["status"] != "pending":
+            if i["status"] not in retryable:
                 continue  # never rewrite history
             i["scheduled_at"] = (parse_dt(i["scheduled_at"]) + delta).isoformat()
+            i["status"] = "pending"  # a failed item gets a fresh attempt
+            i["last_error"] = ""
             moved += 1
 
     # Stale digests carry their date in the id; `build` regenerates them.

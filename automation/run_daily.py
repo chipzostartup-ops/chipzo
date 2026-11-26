@@ -39,6 +39,11 @@ REPORT_PATH = STATE / "manual_tasks.md"
 
 AUTOMATED = {"blog", "telegram", "facebook", "instagram", "email"}
 
+# Channels the whole pipeline is built around. If one of these is switched off
+# while items are due, the run must go red — otherwise it "succeeds" for days
+# while nothing is actually published.
+CORE_CHANNELS = {"blog", "telegram"}
+
 # platform -> config section whose "enabled" flag decides if we can send
 SECTION = {
     "telegram": "telegram",
@@ -166,7 +171,13 @@ def main() -> int:
     if args.catchup:
         due = pending[: args.catchup]
     else:
-        due = [i for i in pending if parse_dt(i["scheduled_at"]) <= cutoff][: args.limit]
+        within = [i for i in pending if parse_dt(i["scheduled_at"]) <= cutoff]
+        # Manual platforms are reported, never sent, so they must not eat the
+        # send budget. With a flat slice, six skipped LinkedIn/WhatsApp rows
+        # could crowd the one blog post out of the run entirely.
+        auto = [i for i in within if not i["manual"]]
+        manual_slice = [i for i in within if i["manual"]]
+        due = auto[: args.limit] + manual_slice
 
     manual_due = [i for i in due if i["manual"] and i["platform"] != "instagram_carousel"]
 
@@ -180,11 +191,17 @@ def main() -> int:
     print(f"Due: {len(due)} item(s)\n")
 
     sent = skipped = failed = 0
+    blocked: dict[str, int] = {}
     for item in due:
         label = f"{item['platform']:<20}{item['title'][:46]}"
 
         if item["manual"] or not can_send(item, cfg):
             reason = "" if item["manual"] else "  (not connected)"
+            if not item["manual"]:
+                # Automated platform with no working account. Silence here is
+                # what let the blog go unpublished for days while every run
+                # still reported success.
+                blocked[item["platform"]] = blocked.get(item["platform"], 0) + 1
             print(f"  MANUAL  {label}{reason}")
             skipped += 1
             continue
@@ -221,8 +238,19 @@ def main() -> int:
         write_text(REPORT_PATH, manual_report(manual_due))
         print(f"\n{len(manual_due)} manual task(s) written to {REPORT_PATH}")
 
+    # A core channel that is switched off is a configuration bug, not a
+    # scheduling detail: those items can never publish on their own.
+    deaf = {p: n for p, n in blocked.items() if p in CORE_CHANNELS}
+    for platform, count in sorted(blocked.items()):
+        if platform in deaf:
+            print(f"::error::{platform}: {count} item(s) due but the channel is not connected")
+        else:
+            print(f"::warning::{platform}: {count} item(s) due but not connected - skipped")
+    if deaf:
+        print("   fix the missing secret, then: python automation/queue.py reschedule")
+
     print(f"\nSummary: {sent} {'would send' if dry else 'sent'}, {skipped} manual, {failed} failed")
-    return 1 if failed else 0
+    return 1 if failed or deaf else 0
 
 
 if __name__ == "__main__":
