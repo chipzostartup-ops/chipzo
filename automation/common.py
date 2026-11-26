@@ -43,6 +43,7 @@ ENV_MAP = {
     "FB_PAGE_ID": ("facebook", "page_id"),
     "FB_PAGE_TOKEN": ("facebook", "page_token"),
     "IG_USER_ID": ("instagram", "ig_user_id"),
+    "BUFFER_API_KEY": ("buffer", "api_key"),
     "BREVO_API_KEY": ("email", "api_key"),
     "WHATSAPP_TOKEN": ("whatsapp", "token"),
     "WHATSAPP_PHONE_ID": ("whatsapp", "phone_number_id"),
@@ -75,6 +76,11 @@ def load_config() -> dict:
     if os.environ.get("SUBSCRIBERS_CSV", "").strip():
         cfg.setdefault("email", {})["enabled"] = True
         cfg["email"].setdefault("provider", "gmail")
+
+    # Same idea: a Buffer key is all LinkedIn, X and Facebook need. Nobody
+    # should have to hand-edit a JSON file to switch a channel on.
+    if os.environ.get("BUFFER_API_KEY", "").strip():
+        cfg.setdefault("buffer", {})["enabled"] = True
 
     return cfg
 

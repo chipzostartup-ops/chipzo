@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from channels import blogger, email_brevo, gmail_bulk, meta, telegram  # noqa: E402
+from channels import blogger, buffer, email_brevo, gmail_bulk, meta, telegram  # noqa: E402
 import links  # noqa: E402
 from common import (  # noqa: E402
     DRAFTS,
@@ -48,7 +48,9 @@ CORE_CHANNELS = {"blog", "telegram"}
 SECTION = {
     "telegram": "telegram",
     "blog": "blogger",
-    "facebook": "facebook",
+    "facebook": "buffer",
+    "linkedin": "buffer",
+    "x_thread": "buffer",
     "email": "email",
     "instagram_carousel": "instagram",
     "instagram_reel": "instagram",
@@ -58,10 +60,41 @@ SECTION = {
 
 def can_send(item: dict, cfg: dict) -> bool:
     """A platform with no connected account must be handled by hand, not retried."""
-    section = SECTION.get(item["platform"])
+    platform = item["platform"]
+    buffer_on = bool(cfg.get("buffer", {}).get("enabled"))
+
+    # Buffer covers LinkedIn, X and Facebook. Without it, LinkedIn and X have
+    # no free API at all, and Facebook falls back to Meta's own token.
+    if platform in buffer.PLATFORMS:
+        if buffer_on:
+            return True
+        if platform == "facebook":
+            return bool(cfg.get("facebook", {}).get("enabled"))
+        return False
+
+    section = SECTION.get(platform)
     if not section:
         return False
     return bool(cfg.get(section, {}).get("enabled"))
+
+
+# No free API exists for these, so a human has to paste them. Everything else
+# that is switched off is a fault worth reporting, not a chore worth listing.
+HUMAN_ONLY = {"whatsapp", "instagram_carousel", "instagram_reel"}
+
+
+def is_manual(item: dict, cfg: dict) -> bool:
+    """Decide from *current* config, never from the flag stored in the queue.
+
+    The stored flag goes stale the moment a channel is connected or switched
+    off, and a stale flag silently skips a channel that could be publishing.
+    """
+    platform = item["platform"]
+    if platform in HUMAN_ONLY:
+        return True
+    if platform in buffer.PLATFORMS and cfg.get("buffer", {}).get("enabled"):
+        return False
+    return not can_send(item, cfg)
 
 
 def read_queue() -> dict:
@@ -89,7 +122,11 @@ def dispatch(item: dict, cfg: dict) -> None:
         raise RuntimeError(f"missing file: {item['file']}")
     text = path.read_text(encoding="utf-8")
 
-    if item["platform"] == "telegram":
+    if item["platform"] in buffer.PLATFORMS and cfg.get("buffer", {}).get("enabled"):
+        # Queued with its planned time so LinkedIn/X/Facebook land on the same
+        # schedule the rest of the pipeline uses.
+        buffer.send_file(item["platform"], path, cfg=cfg, due_at=item["scheduled_at"])
+    elif item["platform"] == "telegram":
         telegram.send(text, cfg)
     elif item["platform"] == "blog":
         blogger.send_post(path, cfg)
@@ -175,11 +212,11 @@ def main() -> int:
         # Manual platforms are reported, never sent, so they must not eat the
         # send budget. With a flat slice, six skipped LinkedIn/WhatsApp rows
         # could crowd the one blog post out of the run entirely.
-        auto = [i for i in within if not i["manual"]]
-        manual_slice = [i for i in within if i["manual"]]
+        auto = [i for i in within if not is_manual(i, cfg)]
+        manual_slice = [i for i in within if is_manual(i, cfg)]
         due = auto[: args.limit] + manual_slice
 
-    manual_due = [i for i in due if i["manual"] and i["platform"] != "instagram_carousel"]
+    manual_due = [i for i in due if is_manual(i, cfg) and i["platform"] != "instagram_carousel"]
 
     if args.manual_report:
         write_text(REPORT_PATH, manual_report(manual_due))
@@ -195,14 +232,14 @@ def main() -> int:
     for item in due:
         label = f"{item['platform']:<20}{item['title'][:46]}"
 
-        if item["manual"] or not can_send(item, cfg):
-            reason = "" if item["manual"] else "  (not connected)"
-            if not item["manual"]:
+        if is_manual(item, cfg):
+            human = item["platform"] in HUMAN_ONLY
+            if not human:
                 # Automated platform with no working account. Silence here is
                 # what let the blog go unpublished for days while every run
                 # still reported success.
                 blocked[item["platform"]] = blocked.get(item["platform"], 0) + 1
-            print(f"  MANUAL  {label}{reason}")
+            print(f"  MANUAL  {label}{'' if human else '  (not connected)'}")
             skipped += 1
             continue
 

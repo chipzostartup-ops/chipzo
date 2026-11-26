@@ -127,9 +127,33 @@ py -3 automation\queue.py build                # regenerates the digests
 
 Already-sent items keep their dates, so history stays honest.
 
-Platforms with no free API (LinkedIn, X, WhatsApp, IG reels) stay manual on
-purpose — `run_daily.py` writes them to `automation/state/manual_tasks.md` with
-a one-line copy command for each.
+### Step 6 — hand LinkedIn, X and Facebook to Buffer (free plan)
+
+Buffer's free plan covers 3 channels with an API key, which turns the three
+biggest copy-paste chores into scheduled sends:
+
+1. On [buffer.com](https://buffer.com) connect **LinkedIn**, **X** and your
+   **Facebook page** — exactly three channels, the free limit.
+2. Create a key at **publish.buffer.com/settings/api**.
+3. Save it and verify:
+
+```powershell
+py -3 automation\connect.py buffer      # asks for the key, checks the channels, enables it
+```
+
+Add the same key to GitHub as the `BUFFER_API_KEY` secret, or CI cannot post.
+Locally the key may also live in `.buffer-key` (gitignored); CI only reads the
+secret.
+
+Once it is on, `run_daily.py` queues LinkedIn, X threads and Facebook posts
+through Buffer with the same schedule the blog uses, and `manual_tasks.md` keeps
+only WhatsApp and the Instagram scripts. Buffer uses its own posting slots, so
+an item scheduled for 08:30 may leave slightly later — that is Buffer picking a
+better time, not a missed run.
+
+Platforms with no free API (WhatsApp, IG reels) stay manual on purpose —
+`run_daily.py` writes them to `automation/state/manual_tasks.md` with a one-line
+copy command for each.
 
 ---
 

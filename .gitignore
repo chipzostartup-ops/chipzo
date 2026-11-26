@@ -1,6 +1,7 @@
 # secrets
 automation/config.json
 automation/state/whatsapp_contacts.csv
+.buffer-key
 
 # generated
 content/out/

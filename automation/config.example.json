@@ -40,6 +40,11 @@
     "token": "",
     "template_name": ""
   },
+  "buffer": {
+    "enabled": false,
+    "api_key": "",
+    "channels": {}
+  },
   "email": {
     "enabled": false,
     "provider": "gmail",

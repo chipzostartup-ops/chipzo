@@ -209,9 +209,26 @@ def check_email(cfg: dict) -> tuple[bool, str]:
     return True, f"Brevo account {data.get('email', '?')}"
 
 
+def check_buffer(cfg: dict) -> tuple[bool, str]:
+    from channels import buffer as buffer_ch
+
+    try:
+        found = buffer_ch.channels(cfg)
+        resolved = buffer_ch.channel_map(cfg)
+    except RuntimeError as exc:
+        return False, str(exc)
+    if not found:
+        return False, "key works, but no channels are connected in Buffer"
+    missing = [p for p in buffer_ch.PLATFORMS if p not in resolved]
+    if missing:
+        return False, f"{len(found)} channel(s); not mapped: {', '.join(missing)}"
+    return True, f"{len(found)} channel(s), LinkedIn + X + Facebook all mapped"
+
+
 CHECKS = {
     "telegram": ("Telegram bot + channel", check_telegram),
     "blogger": ("Blogger via SMTP", check_blogger),
+    "buffer": ("Buffer (LinkedIn/X/FB)", check_buffer),
     "facebook": ("Facebook Page", check_facebook),
     "instagram": ("Instagram Business", check_instagram),
     "whatsapp": ("WhatsApp Cloud API", check_whatsapp),
@@ -345,6 +362,27 @@ def flow_facebook(cfg: dict) -> None:
     save(cfg)
 
 
+def flow_buffer(cfg: dict) -> None:
+    print("\nBUFFER — publishes to LinkedIn, X and Facebook")
+    hint("free plan = 3 channels, 10 scheduled posts each, 1 API key")
+    hint("buffer.com -> Connect channel -> LinkedIn, X, Facebook page")
+    hint("publish.buffer.com/settings/api -> New API key")
+    key = ask("API key", secret=True, default=cfg.get("buffer", {}).get("api_key", ""))
+    if not key:
+        bad("an API key is required")
+        return
+    cfg.setdefault("buffer", {})["api_key"] = key
+    passed, detail = check_buffer(cfg)
+    if not passed:
+        bad(detail)
+        hint("nothing was saved as enabled — fix the channels, then rerun")
+        return
+    ok(detail)
+    cfg["buffer"]["enabled"] = True
+    save(cfg)
+    hint("GitHub Actions needs the same key as the BUFFER_API_KEY secret")
+
+
 def flow_instagram(cfg: dict) -> None:
     print("\nINSTAGRAM BUSINESS")
     hint("IG must be Business/Creator and linked to your Facebook Page")
@@ -401,6 +439,7 @@ def flow_email(cfg: dict) -> None:
 FLOWS = {
     "telegram": flow_telegram,
     "blogger": flow_blogger,
+    "buffer": flow_buffer,
     "facebook": flow_facebook,
     "instagram": flow_instagram,
     "whatsapp": flow_whatsapp,
@@ -436,15 +475,16 @@ def menu(cfg: dict) -> None:
         print("  1  Telegram        (start here, 5 min, fully automatic)")
         print("  2  Blogger         (free blog, auto-post by email)")
         print("  3  Brevo email     (build the list)")
-        print("  4  Facebook page   (auto-post)")
-        print("  5  Instagram       (images only)")
-        print("  6  WhatsApp API    (optional)")
+        print("  4  Buffer          (LinkedIn + X + Facebook in one API)")
+        print("  5  Facebook page   (auto-post, legacy direct API)")
+        print("  6  Instagram       (images only)")
+        print("  7  WhatsApp API    (optional)")
         print("  s  show status")
         print("  q  quit")
         choice = ask("choose").lower()
         mapping = {
-            "1": "telegram", "2": "blogger", "3": "email",
-            "4": "facebook", "5": "instagram", "6": "whatsapp",
+            "1": "telegram", "2": "blogger", "3": "email", "4": "buffer",
+            "5": "facebook", "6": "instagram", "7": "whatsapp",
         }
         if choice == "q":
             return

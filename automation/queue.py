@@ -50,6 +50,10 @@ PLATFORMS = [
 
 EMAIL_DAY = 0  # Monday (Monday=0) — one weekly digest, every Monday 10:00 IST
 
+# Platforms Buffer publishes on our behalf. With a Buffer key configured these
+# stop being "copy the file and paste it" chores and become scheduled sends.
+BUFFER_PLATFORMS = {"linkedin", "facebook", "x_thread"}
+
 
 def load_manifests() -> list[dict]:
     items = []
@@ -64,6 +68,7 @@ def load_manifests() -> list[dict]:
 
 def build(start: date, per_week: int, reset: bool) -> None:
     cfg = load_config()
+    buffer_on = bool(cfg.get("buffer", {}).get("enabled"))
     queue = {"updated_at": "", "items": []} if reset else (read_json(QUEUE_PATH, {}) or {"items": []})
     old = {i["id"]: i for i in queue.get("items", [])}
 
@@ -126,7 +131,7 @@ def build(start: date, per_week: int, reset: bool) -> None:
                     "file": f"content/out/{m['slug']}/{filename}",
                     "scheduled_at": scheduled,
                     "status": prev.get("status", "pending"),
-                    "manual": manual,
+                    "manual": bool(manual and not (buffer_on and key in BUFFER_PLATFORMS)),
                     "attempts": prev.get("attempts", 0),
                     "last_error": prev.get("last_error", ""),
                     "sent_at": prev.get("sent_at", ""),
