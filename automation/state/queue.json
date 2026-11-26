@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-26T06:00:14+00:00",
+  "updated_at": "2026-11-26T06:32:51+00:00",
   "items": [
     {
       "id": "setup-time-vs-hold-time:blog",
@@ -125,11 +125,11 @@
       "platform": "blog",
       "file": "content/out/clock-domain-crossing-techniques/blog.html",
       "scheduled_at": "2026-11-29T09:00:00+05:30",
-      "status": "pending",
+      "status": "sent",
       "manual": false,
-      "attempts": 30,
+      "attempts": 31,
       "last_error": "",
-      "sent_at": ""
+      "sent_at": "2026-11-26T06:30:20+00:00"
     },
     {
       "id": "clock-domain-crossing-techniques:facebook",
@@ -151,11 +151,11 @@
       "platform": "telegram",
       "file": "content/out/clock-domain-crossing-techniques/telegram.md",
       "scheduled_at": "2026-11-29T18:30:00+05:30",
-      "status": "pending",
+      "status": "sent",
       "manual": false,
-      "attempts": 30,
+      "attempts": 31,
       "last_error": "",
-      "sent_at": ""
+      "sent_at": "2026-11-26T06:32:51+00:00"
     },
     {
       "id": "clock-domain-crossing-techniques:whatsapp",
