@@ -116,6 +116,17 @@ py -3 automation\dashboard.py
 start dashboard\index.html
 ```
 
+If the schedule ever falls behind — a failed cron, a week away — every slot ends
+up in the past and nothing can publish again, because `build` never moves a post
+it has already seen. Shift the backlog forward instead:
+
+```powershell
+py -3 automation\queue.py reschedule --start 2026-11-27
+py -3 automation\queue.py build                # regenerates the digests
+```
+
+Already-sent items keep their dates, so history stays honest.
+
 Platforms with no free API (LinkedIn, X, WhatsApp, IG reels) stay manual on
 purpose — `run_daily.py` writes them to `automation/state/manual_tasks.md` with
 a one-line copy command for each.

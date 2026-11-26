@@ -143,6 +143,13 @@ def build(start: date, per_week: int, reset: bool) -> None:
         monday = first_day + timedelta(days=(EMAIL_DAY - first_day.weekday()) % 7)
 
         while monday <= last_day:
+            # A Monday that has already gone by is dead weight: the dispatcher
+            # will never send it, and it sits in the queue as permanently
+            # overdue. Only schedule digests that can still go out.
+            if monday < date.today():
+                monday += timedelta(days=7)
+                continue
+
             week = [
                 by_slug[slug]
                 for slug, day in slug_day.items()
@@ -183,6 +190,66 @@ def build(start: date, per_week: int, reset: bool) -> None:
     last = items[-1]["scheduled_at"][:16] if items else "-"
     print(f"  window: {first} -> {last}")
     print(f"  {PY} automation/dashboard.py   (visual)  /  {PY} automation/run_daily.py --dry-run")
+
+
+def reschedule(start: date, per_week: int) -> None:
+    """Move every unsent post to a future slot, keeping sent history intact.
+
+    `build()` deliberately never moves a slug it has seen before, which is right
+    day to day but leaves the schedule stranded after an outage: every slot is
+    in the past, the dispatcher's tolerance excludes them, and nothing ever
+    publishes again. This shifts the backlog forward instead.
+    """
+    queue = read_json(QUEUE_PATH, {}) or {}
+    items = queue.get("items", [])
+    if not items:
+        print("Queue is empty. Run: python automation/queue.py build")
+        return
+
+    per_week = max(1, min(7, per_week))
+    step_days = 7 / per_week
+
+    # first scheduled day per slug, ignoring the digest pseudo-slug
+    base_day: dict[str, date] = {}
+    for i in items:
+        slug = i.get("slug")
+        if slug and slug != "_digest" and slug not in base_day:
+            base_day[slug] = parse_dt(i["scheduled_at"]).date()
+
+    pending_slugs = {
+        i["slug"] for i in items if i["status"] == "pending" and i.get("slug") not in (None, "_digest")
+    }
+    todo = sorted((s for s in base_day if s in pending_slugs), key=lambda s: base_day[s])
+    if not todo:
+        print("Nothing to reschedule: every post has already been sent.")
+        return
+
+    moved = 0
+    for idx, slug in enumerate(todo):
+        new_day = start + timedelta(days=round(idx * step_days))
+        delta = new_day - base_day[slug]
+        for i in items:
+            if i.get("slug") != slug:
+                continue
+            if i["status"] != "pending":
+                continue  # never rewrite history
+            i["scheduled_at"] = (parse_dt(i["scheduled_at"]) + delta).isoformat()
+            moved += 1
+
+    # Stale digests carry their date in the id; `build` regenerates them.
+    dropped = [i["id"] for i in items if i.get("slug") == "_digest" and i["status"] == "pending"]
+    items = [i for i in items if i["id"] not in dropped]
+
+    items.sort(key=lambda i: (i["scheduled_at"], i["slug"], i["platform"]))
+    queue["items"] = items
+    queue["updated_at"] = now_utc().isoformat(timespec="seconds")
+    write_json(QUEUE_PATH, queue)
+
+    print(f"Rescheduled {moved} item(s) across {len(todo)} post(s) from {start.isoformat()}")
+    print(f"  dropped {len(dropped)} stale digest item(s); run `build` to regenerate")
+    for slug in todo:
+        days = [i["scheduled_at"][:10] for i in items if i.get("slug") == slug]
+        print(f"  {slug:<34}{min(days) if days else '-'}")
 
 
 def show_list(limit: int = 25) -> None:
@@ -230,6 +297,10 @@ def main() -> int:
     d = sub.add_parser("done", help="mark a manual item as published")
     d.add_argument("item_id")
 
+    rs = sub.add_parser("reschedule", help="move every unsent post to future slots")
+    rs.add_argument("--start", default=(date.today() + timedelta(days=1)).isoformat())
+    rs.add_argument("--per-week", type=int, default=3)
+
     args = ap.parse_args()
     if args.cmd == "build":
         build(date.fromisoformat(args.start), args.per_week, args.reset)
@@ -237,6 +308,8 @@ def main() -> int:
         show_list(args.limit)
     elif args.cmd == "done":
         mark_done(args.item_id)
+    elif args.cmd == "reschedule":
+        reschedule(date.fromisoformat(args.start), args.per_week)
     else:
         ap.print_help()
     return 0
