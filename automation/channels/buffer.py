@@ -278,8 +278,22 @@ def send(platform: str, text: str, cfg: dict | None = None, due_at=None, dry_run
     return create_post(platform, text, cfg=cfg, due_at=due_at, dry_run=dry_run)
 
 
-def send_file(platform: str, path: Path, cfg: dict | None = None, due_at=None, dry_run: bool = False) -> dict:
-    return create_post(platform, path.read_text(encoding="utf-8"), cfg=cfg, due_at=due_at, dry_run=dry_run)
+def send_file(
+    platform: str,
+    path: Path,
+    cfg: dict | None = None,
+    due_at=None,
+    dry_run: bool = False,
+    share_now: bool = False,
+) -> dict:
+    return create_post(
+        platform,
+        path.read_text(encoding="utf-8"),
+        cfg=cfg,
+        due_at=due_at,
+        dry_run=dry_run,
+        share_now=share_now,
+    )
 
 
 def carousel_caption(path: Path) -> str:

@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-28T04:53:54+00:00",
+  "updated_at": "2026-11-28T06:33:41+00:00",
   "items": [
     {
       "id": "setup-time-vs-hold-time:blog",
@@ -190,11 +190,24 @@
       "platform": "linkedin",
       "file": "content/out/latch-vs-flip-flop/linkedin.txt",
       "scheduled_at": "2026-12-02T08:30:00+05:30",
-      "status": "pending",
-      "manual": true,
-      "attempts": 0,
+      "status": "sent",
+      "manual": false,
+      "attempts": 1,
       "last_error": "",
-      "sent_at": ""
+      "sent_at": "2026-11-28T06:33:41+00:00"
+    },
+    {
+      "id": "latch-vs-flip-flop:threads",
+      "slug": "latch-vs-flip-flop",
+      "title": "Latch vs Flip-Flop - Why \"A Latch Is Just a Bad Flip-Flop\" Fails Interviews",
+      "platform": "threads",
+      "file": "content/out/latch-vs-flip-flop/threads.txt",
+      "scheduled_at": "2026-12-02T08:45:00+05:30",
+      "status": "sent",
+      "manual": false,
+      "attempts": 1,
+      "last_error": "",
+      "sent_at": "2026-11-28T06:33:41+00:00"
     },
     {
       "id": "latch-vs-flip-flop:blog",
@@ -203,11 +216,11 @@
       "platform": "blog",
       "file": "content/out/latch-vs-flip-flop/blog.html",
       "scheduled_at": "2026-12-02T09:00:00+05:30",
-      "status": "pending",
+      "status": "sent",
       "manual": false,
-      "attempts": 0,
+      "attempts": 1,
       "last_error": "",
-      "sent_at": ""
+      "sent_at": "2026-11-28T06:33:41+00:00"
     },
     {
       "id": "latch-vs-flip-flop:facebook",
@@ -229,11 +242,11 @@
       "platform": "telegram",
       "file": "content/out/latch-vs-flip-flop/telegram.md",
       "scheduled_at": "2026-12-02T18:30:00+05:30",
-      "status": "pending",
+      "status": "sent",
       "manual": false,
-      "attempts": 0,
+      "attempts": 1,
       "last_error": "",
-      "sent_at": ""
+      "sent_at": "2026-11-28T06:33:41+00:00"
     },
     {
       "id": "latch-vs-flip-flop:whatsapp",
@@ -247,6 +260,19 @@
       "attempts": 0,
       "last_error": "",
       "sent_at": ""
+    },
+    {
+      "id": "latch-vs-flip-flop:instagram_carousel",
+      "slug": "latch-vs-flip-flop",
+      "title": "Latch vs Flip-Flop - Why \"A Latch Is Just a Bad Flip-Flop\" Fails Interviews",
+      "platform": "instagram_carousel",
+      "file": "content/out/latch-vs-flip-flop/instagram_carousel.txt",
+      "scheduled_at": "2026-12-02T20:00:00+05:30",
+      "status": "sent",
+      "manual": false,
+      "attempts": 1,
+      "last_error": "",
+      "sent_at": "2026-11-28T06:33:41+00:00"
     },
     {
       "id": "asic-design-flow:linkedin",
