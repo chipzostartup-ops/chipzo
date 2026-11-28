@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-28T06:33:41+00:00",
+  "updated_at": "2026-11-28T13:57:58+00:00",
   "items": [
     {
       "id": "setup-time-vs-hold-time:blog",
@@ -119,6 +119,19 @@
       "sent_at": ""
     },
     {
+      "id": "clock-domain-crossing-techniques:threads",
+      "slug": "clock-domain-crossing-techniques",
+      "title": "Clock Domain Crossing — The 4 Techniques Interviewers Actually Test",
+      "platform": "threads",
+      "file": "content/out/clock-domain-crossing-techniques/threads.txt",
+      "scheduled_at": "2026-11-29T08:45:00+05:30",
+      "status": "pending",
+      "manual": true,
+      "attempts": 0,
+      "last_error": "",
+      "sent_at": ""
+    },
+    {
       "id": "clock-domain-crossing-techniques:blog",
       "slug": "clock-domain-crossing-techniques",
       "title": "Clock Domain Crossing — The 4 Techniques Interviewers Actually Test",
@@ -191,7 +204,7 @@
       "file": "content/out/latch-vs-flip-flop/linkedin.txt",
       "scheduled_at": "2026-12-02T08:30:00+05:30",
       "status": "sent",
-      "manual": false,
+      "manual": true,
       "attempts": 1,
       "last_error": "",
       "sent_at": "2026-11-28T06:33:41+00:00"
@@ -199,12 +212,12 @@
     {
       "id": "latch-vs-flip-flop:threads",
       "slug": "latch-vs-flip-flop",
-      "title": "Latch vs Flip-Flop - Why \"A Latch Is Just a Bad Flip-Flop\" Fails Interviews",
+      "title": "Latch vs Flip-Flop — Why \"A Latch Is Just a Bad Flip-Flop\" Fails Interviews",
       "platform": "threads",
       "file": "content/out/latch-vs-flip-flop/threads.txt",
       "scheduled_at": "2026-12-02T08:45:00+05:30",
       "status": "sent",
-      "manual": false,
+      "manual": true,
       "attempts": 1,
       "last_error": "",
       "sent_at": "2026-11-28T06:33:41+00:00"
@@ -262,25 +275,25 @@
       "sent_at": ""
     },
     {
-      "id": "latch-vs-flip-flop:instagram_carousel",
-      "slug": "latch-vs-flip-flop",
-      "title": "Latch vs Flip-Flop - Why \"A Latch Is Just a Bad Flip-Flop\" Fails Interviews",
-      "platform": "instagram_carousel",
-      "file": "content/out/latch-vs-flip-flop/instagram_carousel.txt",
-      "scheduled_at": "2026-12-02T20:00:00+05:30",
-      "status": "sent",
-      "manual": false,
-      "attempts": 1,
-      "last_error": "",
-      "sent_at": "2026-11-28T06:33:41+00:00"
-    },
-    {
       "id": "asic-design-flow:linkedin",
       "slug": "asic-design-flow",
       "title": "The ASIC Design Flow — And Which Stage Owns Timing Closure",
       "platform": "linkedin",
       "file": "content/out/asic-design-flow/linkedin.txt",
       "scheduled_at": "2026-12-04T08:30:00+05:30",
+      "status": "pending",
+      "manual": true,
+      "attempts": 0,
+      "last_error": "",
+      "sent_at": ""
+    },
+    {
+      "id": "asic-design-flow:threads",
+      "slug": "asic-design-flow",
+      "title": "The ASIC Design Flow — And Which Stage Owns Timing Closure",
+      "platform": "threads",
+      "file": "content/out/asic-design-flow/threads.txt",
+      "scheduled_at": "2026-12-04T08:45:00+05:30",
       "status": "pending",
       "manual": true,
       "attempts": 0,
@@ -392,6 +405,19 @@
       "sent_at": ""
     },
     {
+      "id": "vlsi-job-without-experience:threads",
+      "slug": "vlsi-job-without-experience",
+      "title": "How to Get a VLSI Job With No Experience — The Path That Actually Works",
+      "platform": "threads",
+      "file": "content/out/vlsi-job-without-experience/threads.txt",
+      "scheduled_at": "2026-12-06T08:45:00+05:30",
+      "status": "pending",
+      "manual": true,
+      "attempts": 0,
+      "last_error": "",
+      "sent_at": ""
+    },
+    {
       "id": "vlsi-job-without-experience:blog",
       "slug": "vlsi-job-without-experience",
       "title": "How to Get a VLSI Job With No Experience — The Path That Actually Works",
@@ -463,6 +489,19 @@
       "platform": "linkedin",
       "file": "content/out/rtl-vs-verification/linkedin.txt",
       "scheduled_at": "2026-12-09T08:30:00+05:30",
+      "status": "pending",
+      "manual": true,
+      "attempts": 0,
+      "last_error": "",
+      "sent_at": ""
+    },
+    {
+      "id": "rtl-vs-verification:threads",
+      "slug": "rtl-vs-verification",
+      "title": "RTL Design vs Verification — How to Pick the Right Side",
+      "platform": "threads",
+      "file": "content/out/rtl-vs-verification/threads.txt",
+      "scheduled_at": "2026-12-09T08:45:00+05:30",
       "status": "pending",
       "manual": true,
       "attempts": 0,
