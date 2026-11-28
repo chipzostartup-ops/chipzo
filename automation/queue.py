@@ -39,6 +39,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 # key, output file, local time (HH:MM), manual?
 PLATFORMS = [
     ("linkedin",          "linkedin.txt",            "08:30", True),
+    ("threads",           "threads.txt",             "08:45", True),
     ("blog",              "blog.html",               "09:00", False),
     ("facebook",          "facebook.txt",            "12:30", False),
     ("telegram",          "telegram.md",             "18:30", False),
@@ -52,7 +53,7 @@ EMAIL_DAY = 0  # Monday (Monday=0) — one weekly digest, every Monday 10:00 IST
 
 # Platforms Buffer publishes on our behalf. With a Buffer key configured these
 # stop being "copy the file and paste it" chores and become scheduled sends.
-BUFFER_PLATFORMS = {"linkedin", "facebook", "x_thread"}
+BUFFER_PLATFORMS = {"linkedin", "facebook", "x_thread", "threads", "instagram_carousel"}
 
 
 def load_manifests() -> list[dict]:
@@ -120,6 +121,10 @@ def build(start: date, per_week: int, reset: bool) -> None:
 
             item_id = f"{m['slug']}:{key}"
             prev = old.get(item_id, {})
+            # A channel added to PLATFORMS later must not conjure past rows for
+            # every old post: they would all be due at once and publish in a burst.
+            if key == "threads" and item_id not in old and when.date() < date.today():
+                continue
             # keep existing schedule if already dispatched
             scheduled = prev.get("scheduled_at") or when.isoformat()
             items.append(

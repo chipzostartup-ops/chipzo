@@ -83,7 +83,7 @@ def can_send(item: dict, cfg: dict) -> bool:
 
 # No free API exists for these, so a human has to paste them. Everything else
 # that is switched off is a fault worth reporting, not a chore worth listing.
-HUMAN_ONLY = {"whatsapp", "instagram_carousel", "instagram_reel"}
+HUMAN_ONLY = {"whatsapp", "instagram_reel"}
 
 
 def is_manual(item: dict, cfg: dict) -> bool:
@@ -96,7 +96,8 @@ def is_manual(item: dict, cfg: dict) -> bool:
     if platform in HUMAN_ONLY:
         return True
     if platform in buffer.PLATFORMS and cfg.get("buffer", {}).get("enabled"):
-        return False
+        ready = cfg.get("_buffer_ready")
+        return ready is not None and platform not in ready
     return not can_send(item, cfg)
 
 
@@ -127,8 +128,11 @@ def dispatch(item: dict, cfg: dict) -> None:
 
     if item["platform"] in buffer.PLATFORMS and cfg.get("buffer", {}).get("enabled"):
         # Queued with its planned time so LinkedIn/X/Facebook land on the same
-        # schedule the rest of the pipeline uses.
-        buffer.send_file(item["platform"], path, cfg=cfg, due_at=item["scheduled_at"])
+        # schedule the rest of the pipeline uses. Instagram needs its slides.
+        if item["platform"] == "instagram_carousel":
+            buffer.send_carousel(item["slug"], cfg=cfg, due_at=item["scheduled_at"])
+        else:
+            buffer.send_file(item["platform"], path, cfg=cfg, due_at=item["scheduled_at"])
     elif item["platform"] == "telegram":
         telegram.send(text, cfg)
     elif item["platform"] == "blog":

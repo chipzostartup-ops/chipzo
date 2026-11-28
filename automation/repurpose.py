@@ -55,6 +55,7 @@ from links import cached as cached_url  # noqa: E402
 PLATFORM_FILES = [
     "blog.html",
     "linkedin.txt",
+    "threads.txt",
     "instagram_carousel.txt",
     "instagram_reel.txt",
     "telegram.md",
@@ -426,6 +427,28 @@ Full breakdown (with diagrams): {link}
 """
 
 
+def build_threads(meta: dict, sec: dict, cfg: dict) -> str:
+    """Threads allows 500 characters - shorter than LinkedIn, longer than X."""
+    brand = cfg["brand"]
+    hook = default_hook(meta, sec)
+    link = blog_url(brand, meta)
+    points = key_points(sec, 3)
+
+    def compose(head: str, pts: list[str]) -> str:
+        bullets = "\n".join(f"→ {p}" for p in pts)
+        return f"{head}\n\n{bullets}\n\nFull post: {link}".strip()
+
+    body = compose(hook, points)
+    while points and len(body) > 480:
+        points.pop()
+        body = compose(hook, points)
+    if len(body) > 480:
+        body = compose(first_sentence(hook, 180), points)
+    if len(body) > 480:
+        body = body[:479].rsplit(" ", 1)[0] + "…"
+    return body + "\n"
+
+
 def build_instagram_carousel(meta: dict, sec: dict, cfg: dict) -> str:
     brand = cfg["brand"]
     hook = default_hook(meta, sec)
@@ -596,6 +619,7 @@ Reply STOP to unsubscribe.
 BUILDERS = {
     "blog.html": build_blog,
     "linkedin.txt": build_linkedin,
+    "threads.txt": build_threads,
     "instagram_carousel.txt": build_instagram_carousel,
     "instagram_reel.txt": build_instagram_reel,
     "telegram.md": build_telegram,

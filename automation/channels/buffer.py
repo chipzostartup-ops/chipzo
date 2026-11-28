@@ -39,12 +39,18 @@ SERVICE = {
     "linkedin": "linkedin",
     "facebook": "facebook",
     "x_thread": "twitter",
+    "threads": "threads",
+    "instagram_carousel": "instagram",
 }
 
 PLATFORMS = tuple(SERVICE)
 
 # Buffer validates against the network's own limit, counted in UTF-16 units.
-LIMITS = {"linkedin": 3000, "facebook": 5000, "twitter": 280}
+LIMITS = {"linkedin": 3000, "facebook": 5000, "twitter": 280, "threads": 500, "instagram": 2200}
+
+# Where the rendered Instagram slides live once committed. Buffer accepts no
+# uploads, so every asset has to be a public URL.
+ASSETS_BASE = "https://raw.githubusercontent.com/chipzostartup-ops/chipzo/main/content/cards"
 
 # Free-plan friendly: how much of a tweet we will keep when trimming.
 ELLIPSIS = "…"
@@ -192,6 +198,8 @@ def create_post(
     due_at: datetime | str | None = None,
     dry_run: bool = False,
     draft: bool = False,
+    assets: list[str] | None = None,
+    share_now: bool = False,
 ) -> dict:
     """Schedule one post on the Buffer channel that matches `platform`."""
     cfg = cfg or load_config()
@@ -217,6 +225,9 @@ def create_post(
         "schedulingType": "automatic",
     }
 
+    if assets:
+        payload["assets"] = [{"image": {"url": url}} for url in assets]
+
     if platform == "x_thread":
         tweets = split_thread(text)
         if not tweets:
@@ -226,8 +237,18 @@ def create_post(
         payload["text"] = tweets[0]
         payload["metadata"] = {"twitter": {"thread": [{"text": t} for t in tweets]}}
 
+    if platform == "instagram_carousel":
+        # Two fields Buffer's docs omit: without a type it rejects the post, and
+        # without shouldShareToFeed it rejects the metadata object.
+        if not assets:
+            raise RuntimeError("Instagram needs at least one public image URL")
+        payload["metadata"] = {"instagram": {"type": "post", "shouldShareToFeed": True}}
+
+    if share_now:
+        payload["mode"] = "shareNow"
+        payload.pop("dueAt", None)
     # A time in the past is rejected; let Buffer slot it instead of firing blind.
-    if scheduled and parse_dt(scheduled) > datetime.now(timezone.utc) + timedelta(minutes=5):
+    elif scheduled and parse_dt(scheduled) > datetime.now(timezone.utc) + timedelta(minutes=5):
         payload["mode"] = "customScheduled"
         payload["dueAt"] = scheduled
     else:
@@ -259,6 +280,49 @@ def send(platform: str, text: str, cfg: dict | None = None, due_at=None, dry_run
 
 def send_file(platform: str, path: Path, cfg: dict | None = None, due_at=None, dry_run: bool = False) -> dict:
     return create_post(platform, path.read_text(encoding="utf-8"), cfg=cfg, due_at=due_at, dry_run=dry_run)
+
+
+def carousel_caption(path: Path) -> str:
+    """The carousel file is a slide script plus a CAPTION block; Instagram wants only the caption."""
+    text = path.read_text(encoding="utf-8")
+    marker = "=== CAPTION ==="
+    return text.split(marker, 1)[1].strip() if marker in text else text.strip()
+
+
+def card_urls(slug: str, cfg: dict | None = None) -> list[str]:
+    """Public URLs of the rendered slides, in order. Instagram has no upload API."""
+    cfg = cfg or load_config()
+    base = ((cfg.get("buffer", {}) or {}).get("assets_base") or ASSETS_BASE).rstrip("/")
+    folder = ROOT / "content" / "cards" / slug
+    slides = sorted(folder.glob("slide-*.png"), key=lambda p: int(p.stem.split("-")[1]))
+    if not slides:
+        raise RuntimeError(
+            f"no rendered slides in {folder} - run: python automation/cards.py --slug {slug}"
+        )
+    return [f"{base}/{slug}/{p.name}" for p in slides]
+
+
+def send_carousel(
+    slug: str,
+    cfg: dict | None = None,
+    due_at=None,
+    share_now: bool = False,
+    dry_run: bool = False,
+) -> dict:
+    """Post a rendered carousel to Instagram through Buffer."""
+    cfg = cfg or load_config()
+    script = ROOT / "content" / "out" / slug / "instagram_carousel.txt"
+    if not script.exists():
+        raise RuntimeError(f"missing carousel script: {script}")
+    return create_post(
+        "instagram_carousel",
+        carousel_caption(script),
+        cfg=cfg,
+        due_at=due_at,
+        dry_run=dry_run,
+        assets=card_urls(slug, cfg),
+        share_now=share_now,
+    )
 
 
 def ready_platforms(cfg: dict | None = None) -> set[str]:
